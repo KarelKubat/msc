@@ -10,7 +10,9 @@ use IO::Handle;
 use Fcntl qw(:flock);
 
 # Versioning
-my $VER = '1.39';
+my $VER = '1.40';
+# [KK 2017-09-06] 1.40 localtime and gmtime understand micro and millisec
+#                 stamps
 # [KK 2017-08-26] 1.39 Removed --color from ls invocations to make it more
 #                 portable. Better "export CLICOLOR=1" when you want it.
 # [KK 2017-08-25] 1.38 Cd to a no longer existing directory (stored during a
@@ -973,16 +975,30 @@ sub tac {
     }
 }
 
+sub micro_milli_or_sec($) {
+  my $nr = shift;
+
+  if (length($nr) > 15) {
+    # 16 chars (or more), assumed microsec as in 1504699490000000
+    return $nr / 1000000;
+  } elsif (length($nr) > 12) {
+    # 13 chars (or more), assumed millisec as in 1504699490000
+    return $nr / 1000;
+  } else {
+    return $nr;
+  }
+}
+
 sub cmd_localtime {
-    die("Usage: localtime [SECONDS-SINCE-EPOCH]\n") if ($ARGV[1]);
-    my $time_t = ($#ARGV > -1 ? $ARGV[0] : time());
-    print(time2stamp(localtime($time_t)), "\n");
+  die("Usage: localtime [SECONDS-SINCE-EPOCH]\n") if ($ARGV[1]);
+  my $time_t = micro_milli_or_sec($#ARGV > -1 ? $ARGV[0] : time());
+  print(time2stamp(localtime($time_t)), "\n");
 }
 
 sub cmd_gmtime {
-    die("Usage: gmtime [SECONDS-SINCE-EPOCH]\n") if ($ARGV[1]);
-    my $time_t = ($#ARGV > -1 ? $ARGV[0] : time());
-    print(time2stamp(gmtime($time_t)), "\n");
+  die("Usage: gmtime [SECONDS-SINCE-EPOCH]\n") if ($ARGV[1]);
+  my $time_t = micro_milli_or_sec($#ARGV > -1 ? $ARGV[0] : time());
+  print(time2stamp(gmtime($time_t)), "\n");
 }
 
 sub time2stamp {
