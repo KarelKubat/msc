@@ -10,7 +10,8 @@ use IO::Handle;
 use Fcntl qw(:flock);
 
 # Versioning
-my $VER = '1.40';
+my $VER = '1.42';
+# [KK 2017-10-13] 1.42 color codes are shown alphasorted
 # [KK 2017-10-13] 1.41 added color cmd for colorizing terminal output
 # [KK 2017-09-06] 1.40 localtime and gmtime understand micro and millisec
 #                 stamps
@@ -1076,12 +1077,12 @@ sub cmd_color {
       "then it is displayed. When -r is present, then the terminal color\n",
       "is reset after the output. When -n present, a newline is appended.\n",
       "CODE must be one of:\n",
-      join(' ', keys(%code)), "\n")
+      join(' ', sort(keys(%code))), "\n")
     if (not getopts('rn', \%opts) or $#ARGV < 0);
   my $color = shift(@ARGV);
   die ("color: no such code $color\n",
        "Available color codes:\n",
-       join(' ', keys(%code)), "\n")
+       join(' ', sort(keys(%code))), "\n")
     unless ($code{$color});
 
   print("\e[", $code{$color}, "m");
