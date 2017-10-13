@@ -11,6 +11,7 @@ use Fcntl qw(:flock);
 
 # Versioning
 my $VER = '1.42';
+# [KK 2017-10-13] 1.43 less doesn't start an xterm when not appropriate
 # [KK 2017-10-13] 1.42 color codes are shown alphasorted
 # [KK 2017-10-13] 1.41 added color cmd for colorizing terminal output
 # [KK 2017-09-06] 1.40 localtime and gmtime understand micro and millisec
@@ -689,7 +690,11 @@ sub cmd_perldoc {
 }
 
 sub cmd_less {
+  if ($#_ < 0 or not -t STDOUT) {
+    sysrun('less', @_);
+  } else {
     xterm_run('less', @_, '|', findbin('less'));
+  }
 }
 sub cmd_man {
     xterm_run('man', @_);
