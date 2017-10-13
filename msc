@@ -11,6 +11,7 @@ use Fcntl qw(:flock);
 
 # Versioning
 my $VER = '1.40';
+# [KK 2017-10-13] 1.41 added color cmd for colorizing terminal output
 # [KK 2017-09-06] 1.40 localtime and gmtime understand micro and millisec
 #                 stamps
 # [KK 2017-08-26] 1.39 Removed --color from ls invocations to make it more
@@ -106,6 +107,7 @@ For bootstrapping (loading of aliases, functions), type:
 
 Available (symlinked) commands:
 
+  color     output text in terms with colors, try 'color' to see usage
   l, d      short, long directory listing
   lt, dt    short, long listing by date
   lx, dx    short, long directory listing by extension, e.g. dx c (lists *.c)
@@ -194,7 +196,7 @@ sub cmd_install {
 		  ruler man while0 while1 while5 beep ds loglimit
 		  d2u u2d hisgrep_function tolower crypt tac ascii
 		  localtime gmtime timet rsyncdir
-		  r h k);
+		  r h k color);
 
     # Install main binary if appropriate.
     cmd_cpf($0, "$bindir/msc");
@@ -1043,6 +1045,49 @@ sub cmd_k {
   my $python = findbin('python3') or findbin('python');
   die("k: neither python3 nor python found\n") unless ($python);
   xterm_run($python);
+}
+
+sub cmd_color {
+  my %opts;
+
+  # Shamelessly copied from:
+  # https://misc.flogisoft.com/bash/tip_colors_and_formatting
+  my %code = (
+    bold => 1, dim => 2, underline => 4, blink => 5, reverse => 7,
+    hidden => 8,
+
+    reset => 0,
+
+    fgdefault => 39, fgblack => 30, fgred => 31, fggreen => 32,
+    fgyellow => 33, fgblue => 34, fgmagenta => 35, fgcyan => 36,
+    fglightgray => 37, fgdarkgray => 90, fglightred => 91,
+    fglightgreen => 92, fglightyellow => 93, fglightblue => 94,
+    fglightmagenta => 95, fglightcyan => 96, fgwhite => 97,
+
+    bgdefault => 49, bgblack => 40, bgred => 41, bggreen => 42,
+    bgyellow => 43, bgblue => 44, bgmagenta => 45, bgcyan => 46,
+    bglightgray => 47, bgdarkgray => 100, bglightred => 101,
+    bglightmagenta => 105, bglightcyan => 106, bgwhite => 107,
+
+    );
+
+  die("Usage: color [-r] [-n] CODE [TEXT...]\n",
+      "Starts colorizing the output according to CODE. If TEXT is given,\n",
+      "then it is displayed. When -r is present, then the terminal color\n",
+      "is reset after the output. When -n present, a newline is appended.\n",
+      "CODE must be one of:\n",
+      join(' ', keys(%code)), "\n")
+    if (not getopts('rn', \%opts) or $#ARGV < 0);
+  my $color = shift(@ARGV);
+  die ("color: no such code $color\n",
+       "Available color codes:\n",
+       join(' ', keys(%code)), "\n")
+    unless ($code{$color});
+
+  print("\e[", $code{$color}, "m");
+  print(join(' ', @ARGV)) if (@ARGV);
+  print("\e[", $code{reset}, "m") if ($opts{r});
+  print("\n") if ($opts{n});
 }
 
 sub cmd_rsyncdir {
