@@ -10,7 +10,8 @@ use IO::Handle;
 use Fcntl qw(:flock);
 
 # Versioning
-my $VER = '1.42';
+my $VER = '1.44';
+# [KK 2017-10-23] 1.44 Removing less as it gives me headaches
 # [KK 2017-10-13] 1.43 less doesn't start an xterm when not appropriate
 # [KK 2017-10-13] 1.42 color codes are shown alphasorted
 # [KK 2017-10-13] 1.41 added color cmd for colorizing terminal output
@@ -150,7 +151,6 @@ Available (symlinked) commands:
   ftail     like tail -f, if you don't have it
   ip        shows IP addresses
   ruler     displays a 80-column ruler, or use ruler -w WIDTH for other nrs.
-  less      less-pager in a new window
   man       man display in a new window
   m         make, with stdout/stderr to less
   perldoc   Perl documentation in a new window
@@ -193,7 +193,7 @@ sub cmd_install {
     my @cmds = qw(d dx lx rx tarc tarx tart path ps1 x
 		  xoff xon xoff_xon_aliases ip
 		  up1 up2 up_aliases m l cpf ftail e ew ep ep_alias
-		  lt dt perldoc less
+		  lt dt perldoc
 		  psg gd gd_function xd xd_function b64enc b64dec hex
 		  ruler man while0 while1 while5 beep ds loglimit
 		  d2u u2d hisgrep_function tolower crypt tac ascii
@@ -689,13 +689,6 @@ sub cmd_perldoc {
     xterm_run('perldoc', '-t', @_, '|' , findbin('less'));
 }
 
-sub cmd_less {
-  if ($#_ < 0 or not -t STDOUT) {
-    sysrun('less', @_);
-  } else {
-    xterm_run('less', @_, '|', findbin('less'));
-  }
-}
 sub cmd_man {
     xterm_run('man', @_);
 }
