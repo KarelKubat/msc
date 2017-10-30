@@ -1081,7 +1081,7 @@ sub cmd_color {
   die ("color: no such code $color\n",
        "Available color codes:\n",
        join(' ', sort(keys(%code))), "\n")
-    unless ($code{$color});
+    unless (defined($code{$color}));
 
   print("\e[", $code{$color}, "m");
   print(join(' ', @ARGV)) if (@ARGV);
