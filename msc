@@ -10,7 +10,9 @@ use IO::Handle;
 use Fcntl qw(:flock);
 
 # Versioning
-my $VER = '1.44';
+my $VER = '1.45';
+# [KK 2017-11-03] 1.45 stripws added (a-la Emacs). Cmd publish no longer
+#                 needed.
 # [KK 2017-10-23] 1.44 Removing less as it gives me headaches
 # [KK 2017-10-13] 1.43 less doesn't start an xterm when not appropriate
 # [KK 2017-10-13] 1.42 color codes are shown alphasorted
@@ -175,6 +177,7 @@ Available (symlinked) commands:
   tolower   file renaming to lower case
   tac       reversed cat, dumps file line by line in reversed order
   rsyncdir  rsync over ssh to sync local and remote dir
+  stripws   delete trailing whitespace in file(s) or stdin
 
   r         sudo to root, optional arguments are a command to root
   h         with arguments, search for in /etc/hosts; else, edit the file
@@ -198,7 +201,7 @@ sub cmd_install {
 		  ruler man while0 while1 while5 beep ds loglimit
 		  d2u u2d hisgrep_function tolower crypt tac ascii
 		  localtime gmtime timet rsyncdir
-		  r h k color);
+		  r h k color stripws);
 
     # Install main binary if appropriate.
     cmd_cpf($0, "$bindir/msc");
@@ -241,11 +244,6 @@ hisgrep_function >> /tmp/\$\$.mscboot
 . /tmp/\$\$.mscboot
 rm -f /tmp/\$\$.mscboot
 ENDBOOT
-}
-
-sub cmd_publish {
-  die("msc publish: no args supported\n") if ($#ARGV >= 0);
-  sysrun('scp', $0, 'www-data@kb:/var/www/www.kubat.nl/www/msc/');
 }
 
 sub cmd_ascii {
@@ -1289,4 +1287,48 @@ sub shell_escape($) {
 	}
     }
     return $ret;
+}
+
+# Strip whitespace in files or stdin
+sub stripws_in_file($) {
+  my $f = shift;
+
+  # [KK 2017-11-03] karelk@ DO NOT SUBMIT Needs more work
+  # - outf can be stdout
+  # - trailing empty lines must be reduced to 1
+
+  my $out = $f eq '-' ? $f : "$f.tmp";
+  open(my $if, $f)         or die("stripws: cannot read $f: $!\n");
+  open(my $of, ">$out")    or die("stripws: cannot write $out: $!\n");
+
+  my $emptytrailing = 0;
+  while (my $line = <$if>) {
+    chomp($line);
+    $line =~ s{\s*$}{};
+    if ($line eq '') {
+      $emptytrailing++;
+    } else {
+      for (my $i = 0; $i < $emptytrailing; $i++) {
+        print $of ("\n");
+      }
+      print $of ("$line\n");
+      $emptytrailing = 0;
+    }
+  }
+
+  if ($f ne '-') {
+    close($of);
+    unlink($f)       or die("stripws: cannot unlink $f: $!\n");
+    rename($out, $f) or die("stripws: cannot rename $out to $f: $!\n");
+  }
+}
+
+sub cmd_stripws {
+  die <<"EOF" if ($#ARGV < 0);
+Usage: stripws FILE(s): removes trailing whitespace in the file(s)
+Use - for the filename to work on STDIN.
+EOF
+  for my $f (@_) {
+    stripws_in_file($f);
+  }
 }
