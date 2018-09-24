@@ -522,7 +522,7 @@ sub cmd_x {
     } else {
 	my @args = ('xterm', '-geometry', '80x30',
                     # '-fn', '6x13',
-                    '-fa', 'Liberation Mono:size=9:antialias=false',
+                    '-fa', 'Liberation Mono:size=10:antialias=false',
                     '+sb',
 		   '-sl', 500, '-title', $dst);
 	if ($dst =~ /^root/) {
