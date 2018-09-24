@@ -10,7 +10,8 @@ use IO::Handle;
 use Fcntl qw(:flock);
 
 # Versioning
-my $VER = '1.45';
+my $VER = '1.46';
+# [KK 2018-09-24] 1.46 localtime/gmtime also supports nanosec since epoch
 # [KK 2017-11-03] 1.45 stripws added (a-la Emacs). Cmd publish no longer
 #                 needed.
 # [KK 2017-10-23] 1.44 Removing less as it gives me headaches
@@ -974,9 +975,13 @@ sub tac {
     }
 }
 
-sub micro_milli_or_sec($) {
+sub nano_micro_milli_or_sec($) {
   my $nr = shift;
 
+  if (length($nr) > 18) {
+    # 19 chars (or more), assumed nanosec as in 1504699490000000000
+    return $nr / 1000000000;
+  }
   if (length($nr) > 15) {
     # 16 chars (or more), assumed microsec as in 1504699490000000
     return $nr / 1000000;
@@ -989,14 +994,16 @@ sub micro_milli_or_sec($) {
 }
 
 sub cmd_localtime {
-  die("Usage: localtime [SECONDS-SINCE-EPOCH]\n") if ($ARGV[1]);
-  my $time_t = micro_milli_or_sec($#ARGV > -1 ? $ARGV[0] : time());
+  die("Usage: localtime [SINCE-EPOCH]\n",
+      "SINCE-EPOCH may be nano, micro, milli or sec\n") if ($ARGV[1]);
+  my $time_t = nano_micro_milli_or_sec($#ARGV > -1 ? $ARGV[0] : time());
   print(time2stamp(localtime($time_t)), "\n");
 }
 
 sub cmd_gmtime {
-  die("Usage: gmtime [SECONDS-SINCE-EPOCH]\n") if ($ARGV[1]);
-  my $time_t = micro_milli_or_sec($#ARGV > -1 ? $ARGV[0] : time());
+  die("Usage: gmtime [SECONDS-SINCE-EPOCH]\n",
+      "SINCE-EPOCH may be nano, micro, milli or sec\n") if ($ARGV[1]);
+  my $time_t = nano_micro_milli_or_sec($#ARGV > -1 ? $ARGV[0] : time());
   print(time2stamp(gmtime($time_t)), "\n");
 }
 
