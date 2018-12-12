@@ -10,7 +10,8 @@ use IO::Handle;
 use Fcntl qw(:flock);
 
 # Versioning
-my $VER = '1.45';
+my $VER = '1.46';
+# [KK 2018-12-12] 1.46 Location for macports emacs-app added.
 # [KK 2017-11-03] 1.45 stripws added (a-la Emacs). Cmd publish no longer
 #                 needed.
 # [KK 2017-10-23] 1.44 Removing less as it gives me headaches
