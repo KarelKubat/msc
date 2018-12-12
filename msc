@@ -1206,39 +1206,46 @@ sub tarunzipper {
 sub e_run {
     my $wait = shift;
 
-    if (-d '/Applications/Aquamacs.app' and user() ne 'root') {
-	my @cmd = ('open', '-a', '/Applications/Aquamacs.app');
-	push(@cmd, '-W', '-n') if ($wait);
-	push(@cmd, @_, '--args', '-geometry', '80x50');
-	# print STDERR (">>> @cmd\n");
-	sysrun(@cmd);
-    } else {
-	my $found = undef;
-	for my $e (findbin($ENV{EDITOR}), findbin($ENV{VISUAL}),
-		   findbin('emacs'), findbin('vim'), findbin('vi')) {
-	    next unless ($e);
-	    $found = 1;
-            my @args;
-            if ($e -~ /emacs/) {
-              # For emacs, convert file:123 to +123 file. Store in @args.
-              # Add backgrounding if $DISPLAY is set and no $wait is requested.
-              for my $a (@_) {
-                if ($a =~ /(.*):(\d+)$/) {
-                  push(@args, "+$2", $1);
-                } else {
-                  push(@args, $a);
-                }
-              }
-              push(@args, '&') if ($ENV{DISPLAY} and not $wait);
-            } else {
-              # Not emacs. Copy to @args.
-              @args = @_;
-            }
-	    sysrun($e, @args);
-	    last;
+    # Check for typical Mac-like emacses
+    for my $macloc (qw(
+		    /Applications/Aquamacs.app
+		    /Applications/MacPorts/Emacs.app)) {
+	if (-d $macloc and user() ne 'root') {
+	    my @cmd = ('open', '-a', $macloc);
+	    push(@cmd, '-W', '-n') if ($wait);
+	    push(@cmd, @_, '--args', '-geometry', '80x50');
+	    # print STDERR (">>> @cmd\n");
+	    sysrun(@cmd);
+	    return;
 	}
-	die("No editor found\n") unless ($found);
     }
+
+    # Nope, try the standard stuff.
+    my $found = undef;
+    for my $e (findbin($ENV{EDITOR}), findbin($ENV{VISUAL}),
+	       findbin('emacs'), findbin('vim'), findbin('vi')) {
+	next unless ($e);
+	$found = 1;
+	my @args;
+	if ($e -~ /emacs/) {
+	    # For emacs, convert file:123 to +123 file. Store in @args.
+	    # Add backgrounding if $DISPLAY is set and no $wait is requested.
+	    for my $a (@_) {
+                if ($a =~ /(.*):(\d+)$/) {
+		    push(@args, "+$2", $1);
+                } else {
+		    push(@args, $a);
+                }
+	    }
+	    push(@args, '&') if ($ENV{DISPLAY} and not $wait);
+	} else {
+	    # Not emacs. Copy to @args.
+	    @args = @_;
+	}
+	sysrun($e, @args);
+	last;
+    }
+    die("No editor found\n") unless ($found);
 }
 
 # Run stuff in an xterm - if we have a DISPLAY and if we have xterm
