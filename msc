@@ -10,7 +10,8 @@ use IO::Handle;
 use Fcntl qw(:flock);
 
 # Versioning
-my $VER = '1.47';
+my $VER = '1.48';
+# [KK 2019-01-16] 1.48 Location for macports emacs-mac-app added.
 # [KK 2018-12-12] 1.47 Location for macports emacs-app added.
 # [KK 2018-09-24] 1.46 localtime/gmtime also supports nanosec since epoch
 # [KK 2017-11-03] 1.45 stripws added (a-la Emacs). Cmd publish no longer
@@ -1217,7 +1218,8 @@ sub e_run {
     # Check for typical Mac-like emacses
     for my $macloc (qw(
 		    /Applications/Aquamacs.app
-		    /Applications/MacPorts/Emacs.app)) {
+		    /Applications/MacPorts/Emacs.app
+                    /Applications/MacPorts/EmacsMac.app)) {
 	if (-d $macloc and user() ne 'root') {
 	    my @cmd = ('open', '-a', $macloc);
 	    push(@cmd, '-W', '-n') if ($wait);
