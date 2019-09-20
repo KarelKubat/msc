@@ -10,7 +10,8 @@ use IO::Handle;
 use Fcntl qw(:flock);
 
 # Versioning
-my $VER = '1.49';
+my $VER = '1.50';
+# [KK 2019-09-20] 1.50 Added Visual Studio on Mac as editor.
 # [KK 2019-05-28] 1.49 Avoid recursion in 'man' and 'perldoc' when this script
 #		  is first in $PATH.
 # [KK 2019-01-16] 1.48 Location for macports emacs-mac-app added.
@@ -194,9 +195,9 @@ EOF
 sub cmd_install {
     my $bindir;
     if (@ARGV) {
-	$bindir = $ARGV[0]
+	    $bindir = $ARGV[0]
     } else {
-	$bindir = '/usr/local/bin';
+	    $bindir = '/usr/local/bin';
     }
     my @cmds = qw(d dx lx rx tarc tarx tart path ps1 x
 		  xoff xon xoff_xon_aliases ip
@@ -1217,15 +1218,17 @@ sub tarunzipper {
 sub e_run {
     my $wait = shift;
 
-    # Check for typical Mac-like emacses
-    for my $macloc (qw(
-		    /Applications/Aquamacs.app
-		    /Applications/MacPorts/Emacs.app
-                    /Applications/MacPorts/EmacsMac.app)) {
-	if (-d $macloc and user() ne 'root') {
-	    my @cmd = ('open', '-a', $macloc);
+    # Check for typical Mac-like Visual Studio or emacses
+    for my $ed ('/Applications/Visual Studio Code.app',
+		'/Applications/Aquamacs.app',
+		'/Applications/MacPorts/Emacs.app',
+		'/Applications/MacPorts/EmacsMac.app') {
+	if (-d $ed and user() ne 'root') {
+	    my @cmd = ('open', '-a', $ed);
 	    push(@cmd, '-W', '-n') if ($wait);
-	    push(@cmd, @_, '--args', '-geometry', '80x50');
+	    push(@cmd, @_);
+	    push(@cmd, '--args', '-geometry', '80x50')
+		if ($ed =~ /emacs/i);
 	    # print STDERR (">>> @cmd\n");
 	    sysrun(@cmd);
 	    return;
