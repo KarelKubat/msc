@@ -22,7 +22,8 @@ What this does (below list may be stale):
   l, d      short, long directory listing
   lt, dt    short, long listing by date
   lx, dx    short, long directory listing by extension, e.g. dx c (lists *.c)
-  rx	    remove files by extension, e.g. rx o a (removes *.o *.a)
+  rx	      remove files by extension, e.g. rx o a (removes *.o *.a)
+  mvext     rename files to a new extension
   up1, up2  cd 1 or 2 up, use as: eval `up1` and: eval `up2`
             to set up the aliases - and --, run the bootstrap or:
       	      eval `up_aliases`
