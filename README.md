@@ -11,7 +11,7 @@ I regularly use `msc` when setting up a new server to make my life easier:
 *  Next, edit `~/.bashrc` and add:
 
    ``` shell
-   /usr/local/bin/msc install > /tmp/$$ && . /tmp/$$ && rm /tmp/$$
+   /usr/local/bin/msc bootstrap > /tmp/$$ && . /tmp/$$ && rm /tmp/$$
    # or ~/bin/msc install, if that's the location where msc resides
    ```
 
