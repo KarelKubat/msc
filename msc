@@ -10,7 +10,8 @@ use IO::Handle;
 use Fcntl qw(:flock);
 
 # Versioning
-my $VER = '1.50';
+my $VER = '1.51';
+# [KK 2021-01-28] 1.51 Added mvext.
 # [KK 2019-09-20] 1.50 Added Visual Studio on Mac as editor.
 # [KK 2019-05-28] 1.49 Avoid recursion in 'man' and 'perldoc' when this script
 #		  is first in $PATH.
@@ -161,6 +162,7 @@ Available (symlinked) commands:
   ruler     displays a 80-column ruler, or use ruler -w WIDTH for other nrs.
   man       man display in a new window
   m         make, with stdout/stderr to less
+  mvext     rename extensions of files
   perldoc   Perl documentation in a new window
   psg       like 'ps ax' but looks for certain commands
   while1    run commands every 1 second (or 5 sec with while5, or without delay
@@ -201,7 +203,7 @@ sub cmd_install {
     }
     my @cmds = qw(d dx lx rx tarc tarx tart path ps1 x
 		  xoff xon xoff_xon_aliases ip
-		  up1 up2 up_aliases m l cpf ftail e ew ep ep_alias
+		  up1 up2 up_aliases m l cpf mvext ftail e ew ep ep_alias
 		  lt dt perldoc
 		  psg gd gd_function xd xd_function b64enc b64dec hex
 		  ruler man while0 while1 while5 beep ds loglimit
@@ -265,6 +267,25 @@ sub cmd_ascii {
 	}
     }
     print("\n");
+}
+
+sub cmd_mvext {
+    die("Usage: mvext FILE(S) NEW_EXTENSION\n",
+        "Example: mvext *.log old (renames FILES.log to FILES.old)\n")
+        if ($#ARGV < 2);
+    my $ext = pop(@ARGV);
+    die("mvext: won't clobber $ext, did you forget to add a new extension?\n")     
+        if (-f $ext);
+    die("mvext: new extension $ext may not contain wildcards\n")
+        if (index($ext, '.') >= 0 or index($ext, '?') >= 0 or index($ext, '*') >= 0);
+    for my $f (@ARGV) {
+        my $newf = $f;
+        $newf =~ s{\.[a-zA-Z0-9_]+$}{.$ext};
+        print("$f -> $newf\n");
+        die("mvext: won't clobber $newf, already exists\n")
+            if (-f $newf);
+        rename($f, $newf) or die("mvext: cant rename: $!\n");
+    }
 }
 
 sub cmd_d {
