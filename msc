@@ -11,6 +11,7 @@ use Fcntl qw(:flock);
 
 # Versioning
 my $VER = '1.51';
+
 # [KK 2021-01-28] 1.51 Added mvext.
 # [KK 2019-09-20] 1.50 Added Visual Studio on Mac as editor.
 # [KK 2019-05-28] 1.49 Avoid recursion in 'man' and 'perldoc' when this script
@@ -91,18 +92,19 @@ my $VER = '1.51';
 # Find the command and run it.
 my $cmd = $0;
 $cmd =~ s{.*/}{};
-eval ("cmd_$cmd(\@ARGV);");
-die ($@) if ($@);
+eval("cmd_$cmd(\@ARGV);");
+die($@) if ($@);
 
 # --- Dispatched handlers
 
 sub cmd_msc {
+
     # Try testmode - e.g. "msc hex myfile"
-    if ($#ARGV >= 0) {
-	my $cmd = shift(@ARGV);
-	eval("cmd_$cmd(\@ARGV);");
-	die($@) if ($@);
-	return;
+    if ( $#ARGV >= 0 ) {
+        my $cmd = shift(@ARGV);
+        eval("cmd_$cmd(\@ARGV);");
+        die($@) if ($@);
+        return;
     }
 
     # Print eneral overview / usage info
@@ -197,43 +199,47 @@ EOF
 sub cmd_install {
     my $bindir;
     if (@ARGV) {
-	    $bindir = $ARGV[0]
-    } else {
-	    $bindir = '/usr/local/bin';
+        $bindir = $ARGV[0];
+    }
+    else {
+        $bindir = '/usr/local/bin';
     }
     my @cmds = qw(d dx lx rx tarc tarx tart path ps1 x
-		  xoff xon xoff_xon_aliases ip
-		  up1 up2 up_aliases m l cpf mvext ftail e ew ep ep_alias
-		  lt dt perldoc
-		  psg gd gd_function xd xd_function b64enc b64dec hex
-		  ruler man while0 while1 while5 beep ds loglimit
-		  d2u u2d hisgrep_function tolower crypt tac ascii
-		  localtime gmtime timet rsyncdir
-		  r h k color stripws);
+      xoff xon xoff_xon_aliases ip
+      up1 up2 up_aliases m l cpf mvext ftail e ew ep ep_alias
+      lt dt perldoc
+      psg gd gd_function xd xd_function b64enc b64dec hex
+      ruler man while0 while1 while5 beep ds loglimit
+      d2u u2d hisgrep_function tolower crypt tac ascii
+      localtime gmtime timet rsyncdir
+      r h k color stripws);
 
     # Install main binary if appropriate.
-    cmd_cpf($0, "$bindir/msc");
-    chmod(0755, "$bindir/msc")
+    cmd_cpf( $0, "$bindir/msc" );
+    chmod( 0755, "$bindir/msc" )
       or die("Failed to set executable bit on $bindir/msc: $!\n");
 
     # Make symlinks if appropriate.
     for my $c (@cmds) {
-	my $link = "$bindir/$c";
-	if ( (! -f $link) or
-	     (readlink($link) ne "$bindir/msc") ) {
-	    unlink($link);
-	    symlink("$bindir/msc", $link)
-	      or die("Failed to create symlink $link: $!\n");
-	    print("symlink $link created\n");
-	}
+        my $link = "$bindir/$c";
+        if (   ( !-f $link )
+            or ( readlink($link) ne "$bindir/msc" ) )
+        {
+            unlink($link);
+            symlink( "$bindir/msc", $link )
+              or die("Failed to create symlink $link: $!\n");
+            print("symlink $link created\n");
+        }
     }
 }
+
 sub cmd_bootstrap {
     my $bindir;
     if (@ARGV) {
-	$bindir = $ARGV[0]
-    } else {
-	$bindir = '/usr/local/bin';
+        $bindir = $ARGV[0];
+    }
+    else {
+        $bindir = '/usr/local/bin';
     }
 
     my $xdfile = xd_savefile();
@@ -258,89 +264,101 @@ sub cmd_ascii {
     die("Usage: ascii\n") if (@_);
 
     my $printed = 0;
-    for my $ch (0..255) {
-	my $s = ($ch >= 32 and $ch <= 126) ? chr($ch) : '.';
-	printf("%3.3d 0x%2.2x %1.1s  ", $ch, $ch, $s);
-	if (++$printed == 6) {
-	    print("\n");
-	    $printed = 0;
-	}
+    for my $ch ( 0 .. 255 ) {
+        my $s = ( $ch >= 32 and $ch <= 126 ) ? chr($ch) : '.';
+        printf( "%3.3d 0x%2.2x %1.1s  ", $ch, $ch, $s );
+        if ( ++$printed == 6 ) {
+            print("\n");
+            $printed = 0;
+        }
     }
     print("\n");
 }
 
 sub cmd_mvext {
-    die("Usage: mvext FILE(S) NEW_EXTENSION\n",
-        "Example: mvext *.log old (renames FILES.log to FILES.old)\n")
-        if ($#ARGV < 2);
+    die( "Usage: mvext FILE(S) NEW_EXTENSION\n",
+        "Example: mvext *.log old (renames FILES.log to FILES.old)\n" )
+      if ( $#ARGV < 2 );
     my $ext = pop(@ARGV);
-    die("mvext: won't clobber $ext, did you forget to add a new extension?\n")     
-        if (-f $ext);
+    die("mvext: won't clobber $ext, did you forget to add a new extension?\n")
+      if ( -f $ext );
     die("mvext: new extension $ext may not contain wildcards\n")
-        if (index($ext, '.') >= 0 or index($ext, '?') >= 0 or index($ext, '*') >= 0);
+      if ( index( $ext, '.' ) >= 0
+        or index( $ext, '?' ) >= 0
+        or index( $ext, '*' ) >= 0 );
     for my $f (@ARGV) {
         my $newf = $f;
         $newf =~ s{\.[a-zA-Z0-9_]+$}{.$ext};
         print("$f -> $newf\n");
         die("mvext: won't clobber $newf, already exists\n")
-            if (-f $newf);
-        rename($f, $newf) or die("mvext: cant rename: $!\n");
+          if ( -f $newf );
+        rename( $f, $newf ) or die("mvext: cant rename: $!\n");
     }
 }
 
 sub cmd_d {
-    sysexec('ls', '-Fla', @_);
+    sysexec( 'ls', '-Fla', @_ );
 }
+
 sub cmd_l {
-    sysexec('ls', @_);
+    sysexec( 'ls', @_ );
 }
+
 sub cmd_dx {
     die("Usage: dx extension(s)\n") unless (@_);
     for my $e (@_) {
-	sysrun('ls', '-Fla', "*.$e");
+        sysrun( 'ls', '-Fla', "*.$e" );
     }
 }
+
 sub cmd_dt {
-    sysexec('ls', '-ltr', @_);
+    sysexec( 'ls', '-ltr', @_ );
 }
+
 sub cmd_lt {
-    sysexec('ls', '-tr', @_);
+    sysexec( 'ls', '-tr', @_ );
 }
+
 sub cmd_lx {
     die("Usage: lx extension(s)\n") unless (@_);
     for my $e (@_) {
-	sysrun('ls', "*.$e");
+        sysrun( 'ls', "*.$e" );
     }
 }
+
 sub cmd_rx {
     die("Usage: rx extension(s)\n") unless (@_);
     for my $e (@_) {
-	sysrun('rm', "*.$e");
+        sysrun( 'rm', "*.$e" );
     }
 }
+
 sub cmd_up1 {
     die("Usage: up1\n") if (@_);
     print("cd ..\n");
 }
+
 sub cmd_up2 {
     die("Usage: up2\n") if (@_);
     print("cd ../..\n");
 }
+
 sub cmd_up_aliases {
     die("Usage: up_aliases\n") if (@_);
-    print("alias -- -='cd ..'; ",
-	  "alias -- --='cd ../..'\n");
+    print( "alias -- -='cd ..'; ", "alias -- --='cd ../..'\n" );
 }
+
 sub cmd_gd {
     die("Usage: gd newdirectory\n") if ($#_);
     my $d = shift;
     make_path($d);
-    print("cd ", shell_escape($d), "\n");
+    print( "cd ", shell_escape($d), "\n" );
 }
+
 sub cmd_gd_function {
     die("Usage: gd_function\n") if (@_);
     my $instbase = instbase();
-    print <<"ENDFUN"
+    print <<"ENDFUN";
 function gd() {
     if [ -z "\$1" -o -n "\$2" ] ; then
         $instbase/gd
@@ -353,76 +371,82 @@ ENDFUN
 
 sub cmd_xd {
     my %opts;
-    die("Usage: xd [-s] initials\n",
-	"Flag -s saves the path for next shells.\n")
-      if (not getopts('s', \%opts) or $#ARGV);
+    die( "Usage: xd [-s] initials\n",
+        "Flag -s saves the path for next shells.\n" )
+      if ( not getopts( 's', \%opts ) or $#ARGV );
 
     # Gather possibilities relative to root, home, curdir.
-    my @choices = (xd_solve($ARGV[0], $ENV{HOME}),
-		   xd_solve($ARGV[0], '/'),
-		   xd_solve($ARGV[0], '.'));
+    my @choices = (
+        xd_solve( $ARGV[0], $ENV{HOME} ),
+        xd_solve( $ARGV[0], '/' ),
+        xd_solve( $ARGV[0], '.' )
+    );
 
     # De-duplicate by inode.
     my %inodes;
     my @hitlist;
     for my $c (@choices) {
-	my $inode = (stat($c))[1];
-	if (!defined($inodes{$inode})) {
-	    push(@hitlist, $c);
-	    $inodes{$inode} = 1;
-	}
+        my $inode = ( stat($c) )[1];
+        if ( !defined( $inodes{$inode} ) ) {
+            push( @hitlist, $c );
+            $inodes{$inode} = 1;
+        }
     }
 
     my $dst;
-    if ($#hitlist == -1) {
-	$dst = ".";
-    } elsif ($#hitlist == 0) {
-	$dst = $hitlist[0];
-    } else {
-	for my $i (0..$#hitlist) {
-	    print STDERR ($i, ' ', $hitlist[$i], "\n");
-	}
-	print STDERR ("Your choice? ");
-	my $ret = int(<STDIN>);
-	$dst = $choices[$ret];
-	$dst = '.' unless ($dst);
+    if ( $#hitlist == -1 ) {
+        $dst = ".";
+    }
+    elsif ( $#hitlist == 0 ) {
+        $dst = $hitlist[0];
+    }
+    else {
+        for my $i ( 0 .. $#hitlist ) {
+            print STDERR ( $i, ' ', $hitlist[$i], "\n" );
+        }
+        print STDERR ("Your choice? ");
+        my $ret = int(<STDIN>);
+        $dst = $choices[$ret];
+        $dst = '.' unless ($dst);
     }
     print("$dst\n");
 
     # Save if -s given
-    if ($opts{s} and $dst ne '.') {
-	my $savefile = xd_savefile();
-	if ($savefile) {
-	    open(my $of, ">" . xd_savefile())
-	      or die("Cannot write ", xd_savefile(), ": $!\n");
-	    print $of ('cd ', shell_escape($dst), "1>/dev/null 2>&1\n");
-	}
+    if ( $opts{s} and $dst ne '.' ) {
+        my $savefile = xd_savefile();
+        if ($savefile) {
+            open( my $of, ">" . xd_savefile() )
+              or die( "Cannot write ", xd_savefile(), ": $!\n" );
+            print $of ( 'cd ', shell_escape($dst), "1>/dev/null 2>&1\n" );
+        }
     }
 
 }
 
 sub xd_savefile() {
     for my $key (qw(USER LOGNAME)) {
-	return "/tmp/xd.$ENV{$key}" if ($ENV{$key});
+        return "/tmp/xd.$ENV{$key}" if ( $ENV{$key} );
     }
     return undef;
 }
 
-
 sub xd_solve($$) {
-    my ($initials, $startdir) = @_;
-    return $startdir if ($initials eq '');
-    opendir(my $fh, $startdir) or return;
+    my ( $initials, $startdir ) = @_;
+    return $startdir if ( $initials eq '' );
+    opendir( my $fh, $startdir ) or return;
 
     my @ret;
-    while (my $entry = readdir($fh)) {
-	if (-d "$startdir/$entry" and
-	    (uc(substr($initials, 0, 1)) eq
-	     uc(substr($entry, 0, 1)))) {
-	    my $nextdir = "$startdir/$entry";
-	    $nextdir =~ s{//}{/}g;
-	    push(@ret, xd_solve(substr($initials, 1), $nextdir));
-	}
+    while ( my $entry = readdir($fh) ) {
+        if (
+            -d "$startdir/$entry"
+            and
+            ( uc( substr( $initials, 0, 1 ) ) eq uc( substr( $entry, 0, 1 ) ) )
+          )
+        {
+            my $nextdir = "$startdir/$entry";
+            $nextdir =~ s{//}{/}g;
+            push( @ret, xd_solve( substr( $initials, 1 ), $nextdir ) );
+        }
     }
     return @ret;
 }
@@ -448,45 +472,50 @@ ENDFUN
 
 sub cmd_tarc {
     my $ar = shift;
-    die ("Usage: tarc archive directory(~ies)\n") unless (@_);
-    sysrun('tar', 'cf',  '-', @_, '|', tarzipper($ar), '>', $ar);
+    die("Usage: tarc archive directory(~ies)\n") unless (@_);
+    sysrun( 'tar', 'cf', '-', @_, '|', tarzipper($ar), '>', $ar );
 }
+
 sub cmd_tart {
     my $ar = shift;
-    die("Usage: tart archive\n") if (@_ or !$ar);
-    sysrun(tarunzipper($ar), $ar, '|', 'tar', 'tvf', '-');
+    die("Usage: tart archive\n") if ( @_ or !$ar );
+    sysrun( tarunzipper($ar), $ar, '|', 'tar', 'tvf', '-' );
 }
+
 sub cmd_tarx {
     my $ar = shift;
-    die("Usage: tarx archive\n") if (@_ or !$ar);
-    sysrun(tarunzipper($ar), $ar, '|', 'tar', 'xvf', '-');
+    die("Usage: tarx archive\n") if ( @_ or !$ar );
+    sysrun( tarunzipper($ar), $ar, '|', 'tar', 'xvf', '-' );
 }
 
 sub cmd_path {
     my @parts;
-    for my $p ($ENV{HOME}, @_, qw(/usr/local /opt/local
-				  /opt/wireshark
-				  /opt/local/apache /opt/local/apache2
-				  /usr/X11
-				  /usr
-				  /)) {
-	next unless (-d $p);
-	my $found = undef;
-	for my $q (qw(bin sbin)) {
-	    my $pq = $p . '/' . $q;
-	    $pq =~ s{//}{/}g;
-	    next unless (-d $pq);
-	    push(@parts, $pq);
-	    $found++;
-	}
-	push(@parts, $p) unless ($found);
+    for my $p (
+        $ENV{HOME}, @_, qw(/usr/local /opt/local
+        /opt/wireshark
+        /opt/local/apache /opt/local/apache2
+        /usr/X11
+        /usr
+        /)
+      )
+    {
+        next unless ( -d $p );
+        my $found = undef;
+        for my $q (qw(bin sbin)) {
+            my $pq = $p . '/' . $q;
+            $pq =~ s{//}{/}g;
+            next unless ( -d $pq );
+            push( @parts, $pq );
+            $found++;
+        }
+        push( @parts, $p ) unless ($found);
     }
-    for my $p (split(/:/, $ENV{PATH})) {
-	$p =~ s{//}{/}g;
-	next if (inarray($p, @parts));
-	push(@parts, $p) if (-d $p and $p ne '.');
+    for my $p ( split( /:/, $ENV{PATH} ) ) {
+        $p =~ s{//}{/}g;
+        next               if ( inarray( $p, @parts ) );
+        push( @parts, $p ) if ( -d $p and $p ne '.' );
     }
-    print('export PATH=', join(':', @parts), ":.\n");
+    print( 'export PATH=', join( ':', @parts ), ":.\n" );
 }
 
 sub cmd_ps1 {
@@ -541,113 +570,130 @@ ENDTEXT
 sub cmd_x {
     my $dst = shift;
     $dst = user() unless ($dst);
-    $dst .= '@localhost' unless ($dst =~ /@/);
+    $dst .= '@localhost' unless ( $dst =~ /@/ );
 
-    if (!$ENV{DISPLAY} or !findbin('xterm')) {
-	sysexec('ssh', $dst);
-    } else {
-	my @args = ('xterm', '-geometry', '80x30',
-                    # '-fn', '6x13',
-                    '-fa', 'Liberation Mono:size=10:antialias=false',
-                    '+sb',
-		   '-sl', 500, '-title', $dst);
-	if ($dst =~ /^root/) {
-	    push(@args, '-bg', 'LightBlue');
-	} else {
-	    push(@args, '-bg', 'gainsboro', '-fg', 'navy');
-	}
-        push(@args, '-e', 'ssh', '-X', $dst)
-          unless ($dst =~ /\@localhost/);
-        sysrun(@args, '&');
+    if ( !$ENV{DISPLAY} or !findbin('xterm') ) {
+        sysexec( 'ssh', $dst );
+    }
+    else {
+        my @args = (
+            'xterm', '-geometry', '80x30',
+
+            # '-fn', '6x13',
+            '-fa', 'Liberation Mono:size=10:antialias=false',
+            '+sb',
+            '-sl', 500, '-title', $dst
+        );
+        if ( $dst =~ /^root/ ) {
+            push( @args, '-bg', 'LightBlue' );
+        }
+        else {
+            push( @args, '-bg', 'gainsboro', '-fg', 'navy' );
+        }
+        push( @args, '-e', 'ssh', '-X', $dst )
+          unless ( $dst =~ /\@localhost/ );
+        sysrun( @args, '&' );
     }
 }
+
 sub cmd_xoff {
     die("Usage: xoff\n") if (@_);
-    die ("No DISPLAY is set\n") unless ($ENV{DISPLAY});
-    print("export DISPLAY_OFF=$ENV{DISPLAY}; ",
-	  "unset DISPLAY\n");
+    die("No DISPLAY is set\n") unless ( $ENV{DISPLAY} );
+    print( "export DISPLAY_OFF=$ENV{DISPLAY}; ", "unset DISPLAY\n" );
 }
+
 sub cmd_xon {
     die("Usage: xon\n") if (@_);
-    die("No DISPLAY_OFF is set\n") unless ($ENV{DISPLAY_OFF});
-    print("export DISPLAY=$ENV{DISPLAY_OFF}; ",
-	  "unset DISPLAY_OFF\n");
+    die("No DISPLAY_OFF is set\n") unless ( $ENV{DISPLAY_OFF} );
+    print( "export DISPLAY=$ENV{DISPLAY_OFF}; ", "unset DISPLAY_OFF\n" );
 }
+
 sub cmd_xoff_xon_aliases {
     die("Usage: xoff_xon_aliases\n") if (@_);
     my $instbase = instbase();
-    print("alias xoff='eval `$instbase/xoff`'; ",
-	  "alias xon='eval `$instbase/xon`'\n");
+    print(
+        "alias xoff='eval `$instbase/xoff`'; ",
+        "alias xon='eval `$instbase/xon`'\n"
+    );
 }
 
 sub cmd_hisgrep_function {
     die("Usage: hisgrep_function\n") if (@_);
-    print("function hisgrep() {\n",
-	  "    if [ -z \"\$1\" ] ; then\n",
-	  "        history\n",
-	  "    else\n",
-	  "        history | grep -i \"\$1\"\n",
-	  "    fi\n",
-	  "}\n");
+    print(
+        "function hisgrep() {\n",
+        "    if [ -z \"\$1\" ] ; then\n",
+        "        history\n",
+        "    else\n",
+        "        history | grep -i \"\$1\"\n",
+        "    fi\n",
+        "}\n"
+    );
 }
 
 sub cmd_e {
-    e_run(0, @_);
+    e_run( 0, @_ );
 }
+
 sub cmd_ew {
-    e_run(1, @_);
+    e_run( 1, @_ );
 }
+
 sub cmd_ep {
     die("Usage: ep\n") if (@_);
-    print('ew ', profile(), "; ",
-	  '. ',  profile(), "\n");
+    print( 'ew ', profile(), "; ", '. ', profile(), "\n" );
 }
+
 sub cmd_ep_alias {
     die("Usage: ep_alias\n") if (@_);
     my $instbase = instbase();
     print("alias ep='eval `$instbase/ep`'\n");
 }
+
 sub cmd_cpf {
-    cpf_usage() if ($#_ < 1);
-    if (-d $_[$#_]) {
-	for (my $i = 0; $i < $#_; $i++) {
-	    my $dst = $_[$i];
-	    $dst =~ s{.*/}{};
-	    cpf_copy($_[$i], $_[$#_] . '/' . $dst);
-	}
-    } else {
-	cpf_usage() if ($#_ != 1);
-	cpf_copy(@_);
+    cpf_usage() if ( $#_ < 1 );
+    if ( -d $_[$#_] ) {
+        for ( my $i = 0 ; $i < $#_ ; $i++ ) {
+            my $dst = $_[$i];
+            $dst =~ s{.*/}{};
+            cpf_copy( $_[$i], $_[$#_] . '/' . $dst );
+        }
+    }
+    else {
+        cpf_usage() if ( $#_ != 1 );
+        cpf_copy(@_);
     }
 }
+
 sub cpf_usage {
     die <<"EOF";
 Usage: cpf file1 file2
    or: cpf file(s) directory
 EOF
 }
+
 sub cpf_copy {
-    my ($src, $dst) = @_;
+    my ( $src, $dst ) = @_;
     $src =~ s{//}{/}g;
     $dst =~ s{//}{/}g;
 
-    die ("nu such file $src\n") unless (-f $src);
-    if (-f $dst and (stat($dst))[9] >= (stat($src))[9]) {
-	return;
+    die("nu such file $src\n") unless ( -f $src );
+    if ( -f $dst and ( stat($dst) )[9] >= ( stat($src) )[9] ) {
+        return;
     }
-    print ("$src -> $dst: ");
-    open(my $if, $src)    or die("cannot read $src: $!\n");
-    open(my $of, ">$dst") or die("cannot write $dst: $!\n");
-    my ($buf, $n);
-    while ($n = sysread($if, $buf, 10240)) {
-        die ("incomplete write to $dst\n")
-          if (syswrite($of, $buf, $n) != $n);
+    print("$src -> $dst: ");
+    open( my $if, $src )    or die("cannot read $src: $!\n");
+    open( my $of, ">$dst" ) or die("cannot write $dst: $!\n");
+    my ( $buf, $n );
+    while ( $n = sysread( $if, $buf, 10240 ) ) {
+        die("incomplete write to $dst\n")
+          if ( syswrite( $of, $buf, $n ) != $n );
     }
     close($if);
     close($of);
-    chmod((stat($src))[2], $dst);
+    chmod( ( stat($src) )[2], $dst );
     print("copied\n");
 }
+
 sub cmd_ftail {
     die("Usage: ftail file(s)\n") unless (@_);
     $|++;
@@ -655,481 +701,543 @@ sub cmd_ftail {
     # Get initial sizes
     my %size;
     for my $f (@_) {
-	die("$f: not readable\n") unless (-r $f);
-	$size{$f} = (stat($f))[7];
+        die("$f: not readable\n") unless ( -r $f );
+        $size{$f} = ( stat($f) )[7];
     }
     print("Monitoring: @_\n");
 
     # Monitor the files
     my $lastname;
     while (1) {
-	for my $f (sort(keys(%size))) {
-	    my $newsize = (stat($f))[7];
-	    next if ($newsize == $size{$f});
-	    sysopen(my $if, $f, 0) or next;
-	    sysseek($if, $size{$f}, 0) if ($newsize > $size{$f});
-	    if ($lastname ne $f) {
-		print ("==== $f ====\n");
-		$lastname = $f;
-	    }
-	    my $buf;
-	    my $to_read = $newsize - $size{$f};
-	    $to_read = $newsize if ($to_read < 0);
-	    sysread($if, $buf, $to_read);
-	    print($buf);
-	    close($if);
-	    $size{$f} = $newsize;
-	}
+        for my $f ( sort( keys(%size) ) ) {
+            my $newsize = ( stat($f) )[7];
+            next if ( $newsize == $size{$f} );
+            sysopen( my $if, $f, 0 ) or next;
+            sysseek( $if, $size{$f}, 0 ) if ( $newsize > $size{$f} );
+            if ( $lastname ne $f ) {
+                print("==== $f ====\n");
+                $lastname = $f;
+            }
+            my $buf;
+            my $to_read = $newsize - $size{$f};
+            $to_read = $newsize if ( $to_read < 0 );
+            sysread( $if, $buf, $to_read );
+            print($buf);
+            close($if);
+            $size{$f} = $newsize;
+        }
 
-	select(undef, undef, undef, 0.25);
+        select( undef, undef, undef, 0.25 );
     }
 }
+
 sub cmd_ip {
-    for my $l (grep(/inet\s/, split(/\n/, `ifconfig`))) {
-	$l =~ s/^\s*//;
-	$l =~ s/addr://;
-	print((split(/\s+/, $l))[1], "\n");
+    for my $l ( grep( /inet\s/, split( /\n/, `ifconfig` ) ) ) {
+        $l =~ s/^\s*//;
+        $l =~ s/addr://;
+        print( ( split( /\s+/, $l ) )[1], "\n" );
     }
 }
+
 sub cmd_ruler {
     my %opts = ( w => 80 );
 
-    die ("Usage: ruler [-w WIDTH]\n")
-      if (not getopts('w:', \%opts) or $#ARGV != -1);
-    my $tens = int($opts{w} / 10);
+    die("Usage: ruler [-w WIDTH]\n")
+      if ( not getopts( 'w:', \%opts ) or $#ARGV != -1 );
+    my $tens = int( $opts{w} / 10 );
     print(' ');
-    for my $i (1 .. $tens - 1) {
-	printf("%10d", $i);
+    for my $i ( 1 .. $tens - 1 ) {
+        printf( "%10d", $i );
     }
     print("\n");
-    for my $i (1..$tens) {
-	print('0123456789');
+    for my $i ( 1 .. $tens ) {
+        print('0123456789');
     }
     print("\n");
 }
+
 sub cmd_m {
-    sysrun('make', @_, '2>&1', '|', findbin('less'));
+    sysrun( 'make', @_, '2>&1', '|', findbin('less') );
 }
+
 sub cmd_perldoc {
-    xterm_run(findbin('perldoc'), '-t', @_, '|' , findbin('less'));
+    xterm_run( findbin('perldoc'), '-t', @_, '|', findbin('less') );
 }
 
 sub cmd_man {
-    xterm_run(findbin('man'), @_);
+    xterm_run( findbin('man'), @_ );
 }
 
 sub cmd_psg {
     my @targets = @_;
     die("Usage: psg command(s)\n") unless (@targets);
-    open(my $if, "ps ax |") or die("Cannot start 'ps ax': $!\n");
-    my $header = <$if>;
+    open( my $if, "ps ax |" ) or die("Cannot start 'ps ax': $!\n");
+    my $header       = <$if>;
     my $header_shown = undef;
-    while (my $line = <$if>) {
-	my $stripline = $line;
-	chomp($stripline);
-	$stripline =~ s{^\s+}{};
-	$stripline =~ s{\s+$}{};
-	my ($pid, $tt, $stat, $time, $cmd) = split(/\s+/, $stripline, 5);
-	next if ($pid == $$);
-	for my $t (@targets) {
-	    if ($cmd =~ /$t/i) {
-		if (!$header_shown) {
-		    $header_shown = 1;
-		    print($header);
-		}
-		print($line);
-	    }
-	}
+    while ( my $line = <$if> ) {
+        my $stripline = $line;
+        chomp($stripline);
+        $stripline =~ s{^\s+}{};
+        $stripline =~ s{\s+$}{};
+        my ( $pid, $tt, $stat, $time, $cmd ) = split( /\s+/, $stripline, 5 );
+        next if ( $pid == $$ );
+        for my $t (@targets) {
+            if ( $cmd =~ /$t/i ) {
+                if ( !$header_shown ) {
+                    $header_shown = 1;
+                    print($header);
+                }
+                print($line);
+            }
+        }
     }
-    exit($header_shown ? 0 : 1);
+    exit( $header_shown ? 0 : 1 );
 }
 
 sub cmd_while0 {
     die("Usage: while0 'command' ['command' ...]\n") unless (@_);
-    runwhile(0, @_);
+    runwhile( 0, @_ );
 }
+
 sub cmd_while1 {
     die("Usage: while1 'command' ['command' ...]\n") unless (@_);
-    runwhile(1, @_);
+    runwhile( 1, @_ );
 }
+
 sub cmd_while5 {
     die("Usage: while5 'command' ['command' ...]\n") unless (@_);
-    runwhile(5, @_);
+    runwhile( 5, @_ );
 }
+
 sub runwhile {
     my $sec  = shift;
     my @cmds = @_;
 
     while (1) {
-	for my $cmd (@cmds) {
-	    system($cmd) && exit(1);
-	}
-	sleep($sec) if ($sec);
+        for my $cmd (@cmds) {
+            system($cmd) && exit(1);
+        }
+        sleep($sec) if ($sec);
     }
 }
 
 my @ds_target;
+
 sub cmd_ds {
     die("Usage: ds [startdir] filenamepart(s)\n") unless (@_);
 
     my $startdir;
-    if (-d $_[0] and $#_ > 0) {
-	$startdir = shift(@_);
-    } else {
-	$startdir = '.';
+    if ( -d $_[0] and $#_ > 0 ) {
+        $startdir = shift(@_);
+    }
+    else {
+        $startdir = '.';
     }
     chdir($startdir) or die("Cannot cd to $startdir: $!\n");
     @ds_target = @_;
-    find(\&ds_wanted, '.');
+    find( \&ds_wanted, '.' );
 }
+
 sub ds_wanted {
     my @exclude = qw(.svn/ CVS/);
     for my $target (@ds_target) {
-	next unless ($_ =~ /$target/i);
-	my $cand = $File::Find::name;
-	my $avoid = undef;
-	for my $ex (@exclude) {
-	    $avoid = 1 if ($cand =~ /$ex/);
-	}
-	next if ($avoid);
-	$cand = "'$cand'" if ($cand =~ / /);
-	print("$cand\n");
+        next unless ( $_ =~ /$target/i );
+        my $cand  = $File::Find::name;
+        my $avoid = undef;
+        for my $ex (@exclude) {
+            $avoid = 1 if ( $cand =~ /$ex/ );
+        }
+        next              if ($avoid);
+        $cand = "'$cand'" if ( $cand =~ / / );
+        print("$cand\n");
     }
 }
 
 sub cmd_beep {
     my @args = @_;
-    @args = qw(5 4 3 2 1) if ($#args == -1);
+    @args = qw(5 4 3 2 1) if ( $#args == -1 );
     $|++;
     for my $m (@args) {
-	print("\a$m ");
-	sleep(1);
+        print("\a$m ");
+        sleep(1);
     }
     print("\n");
 }
 
 sub cmd_b64enc {
-    if ($#ARGV == -1) {
-	while (my $line = <STDIN>) {
-	    print encode_base64($line);
-	}
-    } else {
-	for my $a (@ARGV) {
-	    print encode_base64($a);
-	}
+    if ( $#ARGV == -1 ) {
+        while ( my $line = <STDIN> ) {
+            print encode_base64($line);
+        }
+    }
+    else {
+        for my $a (@ARGV) {
+            print encode_base64($a);
+        }
     }
 }
+
 sub cmd_b64dec {
-    if ($#ARGV == -1) {
-	while (my $line = <STDIN>) {
-	    print decode_base64($line);
-	}
-    } else {
-	for my $a (@ARGV) {
-	    print decode_base64($a);
-	}
+    if ( $#ARGV == -1 ) {
+        while ( my $line = <STDIN> ) {
+            print decode_base64($line);
+        }
+    }
+    else {
+        for my $a (@ARGV) {
+            print decode_base64($a);
+        }
     }
 }
 
 sub cmd_crypt {
-    die("Usage: crypt SALT PLAINTEXT\n") if ($#ARGV != 1);
+    die("Usage: crypt SALT PLAINTEXT\n") if ( $#ARGV != 1 );
     my $salt  = shift(@ARGV);
     my $plain = shift(@ARGV);
-    print(crypt($plain, $salt), "\n");
+    print( crypt( $plain, $salt ), "\n" );
 }
 
 sub cmd_hex {
     die("Usage: hex FILE(S) (use - for stdin)\n") unless (@_);
     for my $f (@ARGV) {
-	hexdump($f);
+        hexdump($f);
     }
 }
+
 sub hexdump($) {
     my $f = shift;
-    open (my $if, $f) or die ("Cannot read $f: $!\n");
+    open( my $if, $f ) or die("Cannot read $f: $!\n");
 
     my $off = 0;
     my $buf;
     my $bytes;
-    while ( ($bytes = sysread($if, $buf, 16)) > 0) {
-	printf("%8.8x", $off);
-	$off += 16;
-	for my $i (0..$bytes - 1) {
-	    printf(" %2.2x", ord(substr($buf, $i, 1)));
-	}
-	for my $i ($bytes .. 15) {
-	    print('   ');
-	}
-	print ('  ');
-	for my $i (0..$bytes - 1) {
-	    my $ch = substr($buf, $i, 1);
-	    if (ord($ch) <= 32 or ord($ch) >= 127) {
-		print('.');
-	    } else {
-		print($ch)
-	    }
-	}
-	print("\n");
+    while ( ( $bytes = sysread( $if, $buf, 16 ) ) > 0 ) {
+        printf( "%8.8x", $off );
+        $off += 16;
+        for my $i ( 0 .. $bytes - 1 ) {
+            printf( " %2.2x", ord( substr( $buf, $i, 1 ) ) );
+        }
+        for my $i ( $bytes .. 15 ) {
+            print('   ');
+        }
+        print('  ');
+        for my $i ( 0 .. $bytes - 1 ) {
+            my $ch = substr( $buf, $i, 1 );
+            if ( ord($ch) <= 32 or ord($ch) >= 127 ) {
+                print('.');
+            }
+            else {
+                print($ch);
+            }
+        }
+        print("\n");
     }
 }
 
 sub cmd_loglimit {
     die("Usage: loglimit FILE SIZE HISTORYFILES\n")
-      if ($#ARGV != 2);
+      if ( $#ARGV != 2 );
 
-    my ($file, $size, $historyfiles) = @ARGV;
+    my ( $file, $size, $historyfiles ) = @ARGV;
 
     $size = int($size);
-    die("Bad size '$size'\n") if ($size <= 1);
+    die("Bad size '$size'\n") if ( $size <= 1 );
 
     $historyfiles = int($historyfiles);
     die("Bad history files number '$historyfiles'\n")
-      if ($historyfiles < 0);
+      if ( $historyfiles < 0 );
 
     my $of;
-    open ($of, ">>$file") or die("Cannot write $file: $!\n");
+    open( $of, ">>$file" ) or die("Cannot write $file: $!\n");
     select($of);
     $|++;
     select(STDOUT);
 
-    open (my $lockf, '/dev/null')
+    open( my $lockf, '/dev/null' )
       or die("Cannot open lock file /dev/null: $!\n");
 
-    while (my $line = <STDIN>) {
-	flock($lockf, LOCK_EX);
-	if (!print $of ($line)) {
-	    warn("Cannot append $file: $!\n");
-	    open ($of, ">$file") or die("Cannot rewrite $file: $!\n");
-	    select($of);
-	    $|++;
-	    select(STDOUT);
-	    next;
-	}
-	if ((stat($of))[7] > $size) {
-	    # Close stream, rotate old files
-	    close($of);
-	    for (my $nr = $historyfiles; $nr > 1; $nr--) {
-		my $lower = $nr - 1;
-		unlink("$file.$nr");
-		rename("$file.$lower", "$file.$nr");
-	    }
-	    rename($file, "$file.1");
-	    # Open new stream
-	    open ($of, ">$file") or die("Cannot write new $file: $!\n");
-	    select($of);
-	    $|++;
-	    select(STDOUT);
-	}
-	flock($lockf, LOCK_UN);
+    while ( my $line = <STDIN> ) {
+        flock( $lockf, LOCK_EX );
+        if ( !print $of ($line) ) {
+            warn("Cannot append $file: $!\n");
+            open( $of, ">$file" ) or die("Cannot rewrite $file: $!\n");
+            select($of);
+            $|++;
+            select(STDOUT);
+            next;
+        }
+        if ( ( stat($of) )[7] > $size ) {
+
+            # Close stream, rotate old files
+            close($of);
+            for ( my $nr = $historyfiles ; $nr > 1 ; $nr-- ) {
+                my $lower = $nr - 1;
+                unlink("$file.$nr");
+                rename( "$file.$lower", "$file.$nr" );
+            }
+            rename( $file, "$file.1" );
+
+            # Open new stream
+            open( $of, ">$file" ) or die("Cannot write new $file: $!\n");
+            select($of);
+            $|++;
+            select(STDOUT);
+        }
+        flock( $lockf, LOCK_UN );
     }
 }
 
 sub cmd_d2u {
-    die("Usage: d2u file(s)\n") if ($#ARGV < 0);
+    die("Usage: d2u file(s)\n") if ( $#ARGV < 0 );
     for my $ifname (@ARGV) {
-	open(my $if, $ifname) or die("Cannot read $ifname: $!\n");
-	my $ofname = "$ifname.d2u";
-	open(my $of, ">$ofname") or die("Cannot write $ofname: $!\n");
+        open( my $if, $ifname ) or die("Cannot read $ifname: $!\n");
+        my $ofname = "$ifname.d2u";
+        open( my $of, ">$ofname" ) or die("Cannot write $ofname: $!\n");
 
-	while (my $line = <$if>) {
-	    $line =~ s/\r\n/\n/;
-	    print $of ($line) or die("Failed to write $ofname: $!\n");
-	}
+        while ( my $line = <$if> ) {
+            $line =~ s/\r\n/\n/;
+            print $of ($line) or die("Failed to write $ofname: $!\n");
+        }
 
-	close($if);
-	close($of) or die("Failed to close $ofname: $!\n");
+        close($if);
+        close($of) or die("Failed to close $ofname: $!\n");
 
-	chmod((stat($ifname))[2], $ofname)
-	  or die("Failed to set filemode on $ofname: $!\n");
+        chmod( ( stat($ifname) )[2], $ofname )
+          or die("Failed to set filemode on $ofname: $!\n");
 
-	unlink($ifname) or die("Cannot unlink $ifname: $!\n");
-	rename($ofname, $ifname) or die("Cannot rename $ofname to $ifname: ",
-					"$!\n");
+        unlink($ifname) or die("Cannot unlink $ifname: $!\n");
+        rename( $ofname, $ifname )
+          or die( "Cannot rename $ofname to $ifname: ", "$!\n" );
     }
 }
+
 sub cmd_u2d {
-    die("Usage: u2d file(s)\n") if ($#ARGV < 0);
+    die("Usage: u2d file(s)\n") if ( $#ARGV < 0 );
     for my $ifname (@ARGV) {
-	open(my $if, $ifname) or die("Cannot read $ifname: $!\n");
-	my $ofname = "$ifname.u2d";
-	open(my $of, ">$ofname") or die("Cannot write $ofname: $!\n");
+        open( my $if, $ifname ) or die("Cannot read $ifname: $!\n");
+        my $ofname = "$ifname.u2d";
+        open( my $of, ">$ofname" ) or die("Cannot write $ofname: $!\n");
 
-	while (my $line = <$if>) {
-	    $line =~ s/\n/\r\n/;
-	    print $of ($line) or die("Failed to write $ofname: $!\n");
-	}
+        while ( my $line = <$if> ) {
+            $line =~ s/\n/\r\n/;
+            print $of ($line) or die("Failed to write $ofname: $!\n");
+        }
 
-	close($if);
-	close($of) or die("Failed to close $ofname: $!\n");
+        close($if);
+        close($of) or die("Failed to close $ofname: $!\n");
 
-	chmod((stat($ifname))[2], $ofname)
-	  or die("Failed to set filemode on $ofname: $!\n");
+        chmod( ( stat($ifname) )[2], $ofname )
+          or die("Failed to set filemode on $ofname: $!\n");
 
-	unlink($ifname) or die("Cannot unlink $ifname: $!\n");
-	rename($ofname, $ifname) or die("Cannot rename $ofname to $ifname: ",
-					"$!\n");
+        unlink($ifname) or die("Cannot unlink $ifname: $!\n");
+        rename( $ofname, $ifname )
+          or die( "Cannot rename $ofname to $ifname: ", "$!\n" );
     }
 }
 
 sub cmd_tolower {
-    die("Usage: tolower file(s)\n") if ($#ARGV < 0);
+    die("Usage: tolower file(s)\n") if ( $#ARGV < 0 );
     for my $f (@ARGV) {
-	die("$f is not a plain file\n") unless (-f $f);
+        die("$f is not a plain file\n") unless ( -f $f );
     }
     for my $f (@ARGV) {
-	my $new = lc($f);
-	next if ($new eq $f);
-	rename($f, $new) or die("Cannot rename $f to $new: $!\n");
+        my $new = lc($f);
+        next if ( $new eq $f );
+        rename( $f, $new ) or die("Cannot rename $f to $new: $!\n");
     }
 }
 
 sub cmd_tac {
-    if ($#ARGV == -1) {
-	tac(*STDIN);
-    } else {
-	for my $f (@ARGV) {
-	    open(my $if, $f) or die("cannot read $f: $!\n");
-	    tac($if);
-	}
+    if ( $#ARGV == -1 ) {
+        tac(*STDIN);
+    }
+    else {
+        for my $f (@ARGV) {
+            open( my $if, $f ) or die("cannot read $f: $!\n");
+            tac($if);
+        }
     }
 }
 
 sub tac {
     my $f = shift;
-    for my $l (reverse(<$f>)) {
-	print($l);
+    for my $l ( reverse(<$f>) ) {
+        print($l);
     }
 }
 
 sub nano_micro_milli_or_sec($) {
-  my $nr = shift;
+    my $nr = shift;
 
-  if (length($nr) > 18) {
-    # 19 chars (or more), assumed nanosec as in 1504699490000000000
-    return $nr / 1000000000;
-  }
-  if (length($nr) > 15) {
-    # 16 chars (or more), assumed microsec as in 1504699490000000
-    return $nr / 1000000;
-  } elsif (length($nr) > 12) {
-    # 13 chars (or more), assumed millisec as in 1504699490000
-    return $nr / 1000;
-  } else {
-    return $nr;
-  }
+    if ( length($nr) > 18 ) {
+
+        # 19 chars (or more), assumed nanosec as in 1504699490000000000
+        return $nr / 1000000000;
+    }
+    if ( length($nr) > 15 ) {
+
+        # 16 chars (or more), assumed microsec as in 1504699490000000
+        return $nr / 1000000;
+    }
+    elsif ( length($nr) > 12 ) {
+
+        # 13 chars (or more), assumed millisec as in 1504699490000
+        return $nr / 1000;
+    }
+    else {
+        return $nr;
+    }
 }
 
 sub cmd_localtime {
-  die("Usage: localtime [SINCE-EPOCH]\n",
-      "SINCE-EPOCH may be nano, micro, milli or sec\n") if ($ARGV[1]);
-  my $time_t = nano_micro_milli_or_sec($#ARGV > -1 ? $ARGV[0] : time());
-  print(time2stamp(localtime($time_t)), "\n");
+    die( "Usage: localtime [SINCE-EPOCH]\n",
+        "SINCE-EPOCH may be nano, micro, milli or sec\n" )
+      if ( $ARGV[1] );
+    my $time_t = nano_micro_milli_or_sec( $#ARGV > -1 ? $ARGV[0] : time() );
+    print( time2stamp( localtime($time_t) ), "\n" );
 }
 
 sub cmd_gmtime {
-  die("Usage: gmtime [SECONDS-SINCE-EPOCH]\n",
-      "SINCE-EPOCH may be nano, micro, milli or sec\n") if ($ARGV[1]);
-  my $time_t = nano_micro_milli_or_sec($#ARGV > -1 ? $ARGV[0] : time());
-  print(time2stamp(gmtime($time_t)), "\n");
+    die(
+        "Usage: gmtime [SECONDS-SINCE-EPOCH]\n",
+        "SINCE-EPOCH may be nano, micro, milli or sec\n"
+    ) if ( $ARGV[1] );
+    my $time_t = nano_micro_milli_or_sec( $#ARGV > -1 ? $ARGV[0] : time() );
+    print( time2stamp( gmtime($time_t) ), "\n" );
 }
 
 sub time2stamp {
-    my ($sec, $min, $hour, $mday, $mon, $year) = @_;
+    my ( $sec, $min, $hour, $mday, $mon, $year ) = @_;
     $mon++;
     $year += 1900;
-    return sprintf('%4.4d-%2.2d-%2.2d %2.2d:%2.2d:%2.2d',
-		   $year, $mon, $mday, $hour, $min, $sec);
+    return sprintf( '%4.4d-%2.2d-%2.2d %2.2d:%2.2d:%2.2d',
+        $year, $mon, $mday, $hour, $min, $sec );
 }
 
 sub cmd_timet {
-    print(time(), "\n");
+    print( time(), "\n" );
 }
 
 sub cmd_r {
     if (@_) {
-	exec("sudo bash -l -c '@_'");
-	exec("ssh root\@localhost @_");
-    } else {
-	exec('sudo bash -l');
-	exec('ssh root\@localhost');
+        exec("sudo bash -l -c '@_'");
+        exec("ssh root\@localhost @_");
+    }
+    else {
+        exec('sudo bash -l');
+        exec('ssh root\@localhost');
     }
     die("r: no method works to become root\n");
 }
 
 sub cmd_h {
     if (@_) {
-	open(my $if, '/etc/hosts') or die("Cannot read /etc/hosts: #!\n");
-	my @hosts;
-	while (<$if>) {
-	    push(@hosts, $_);
-	}
-	for my $h (@_) {
-	    print(grep(/$h/, @hosts));
-	}
-    } else {
-	exec("e /etc/hosts");
+        open( my $if, '/etc/hosts' ) or die("Cannot read /etc/hosts: #!\n");
+        my @hosts;
+        while (<$if>) {
+            push( @hosts, $_ );
+        }
+        for my $h (@_) {
+            print( grep( /$h/, @hosts ) );
+        }
+    }
+    else {
+        exec("e /etc/hosts");
     }
 }
 
 sub cmd_k {
-  my $python = findbin('python3') or findbin('python');
-  die("k: neither python3 nor python found\n") unless ($python);
-  xterm_run($python);
+    my $python = findbin('python3') or findbin('python');
+    die("k: neither python3 nor python found\n") unless ($python);
+    xterm_run($python);
 }
 
 sub cmd_color {
-  my %opts;
+    my %opts;
 
-  # Shamelessly copied from:
-  # https://misc.flogisoft.com/bash/tip_colors_and_formatting
-  my %code = (
-    bold => 1, dim => 2, underline => 4, blink => 5, reverse => 7,
-    hidden => 8,
+    # Shamelessly copied from:
+    # https://misc.flogisoft.com/bash/tip_colors_and_formatting
+    my %code = (
+        bold      => 1,
+        dim       => 2,
+        underline => 4,
+        blink     => 5,
+        reverse   => 7,
+        hidden    => 8,
 
-    reset => 0,
+        reset => 0,
 
-    fgdefault => 39, fgblack => 30, fgred => 31, fggreen => 32,
-    fgyellow => 33, fgblue => 34, fgmagenta => 35, fgcyan => 36,
-    fglightgray => 37, fgdarkgray => 90, fglightred => 91,
-    fglightgreen => 92, fglightyellow => 93, fglightblue => 94,
-    fglightmagenta => 95, fglightcyan => 96, fgwhite => 97,
+        fgdefault      => 39,
+        fgblack        => 30,
+        fgred          => 31,
+        fggreen        => 32,
+        fgyellow       => 33,
+        fgblue         => 34,
+        fgmagenta      => 35,
+        fgcyan         => 36,
+        fglightgray    => 37,
+        fgdarkgray     => 90,
+        fglightred     => 91,
+        fglightgreen   => 92,
+        fglightyellow  => 93,
+        fglightblue    => 94,
+        fglightmagenta => 95,
+        fglightcyan    => 96,
+        fgwhite        => 97,
 
-    bgdefault => 49, bgblack => 40, bgred => 41, bggreen => 42,
-    bgyellow => 43, bgblue => 44, bgmagenta => 45, bgcyan => 46,
-    bglightgray => 47, bgdarkgray => 100, bglightred => 101,
-    bglightmagenta => 105, bglightcyan => 106, bgwhite => 107,
+        bgdefault      => 49,
+        bgblack        => 40,
+        bgred          => 41,
+        bggreen        => 42,
+        bgyellow       => 43,
+        bgblue         => 44,
+        bgmagenta      => 45,
+        bgcyan         => 46,
+        bglightgray    => 47,
+        bgdarkgray     => 100,
+        bglightred     => 101,
+        bglightmagenta => 105,
+        bglightcyan    => 106,
+        bgwhite        => 107,
 
     );
 
-  die("Usage: color [-r] [-n] CODE [TEXT...]\n",
-      "Starts colorizing the output according to CODE. If TEXT is given,\n",
-      "then it is displayed. When -r is present, then the terminal color\n",
-      "is reset after the output. When -n present, a newline is appended.\n",
-      "CODE must be one of:\n",
-      join(' ', sort(keys(%code))), "\n")
-    if (not getopts('rn', \%opts) or $#ARGV < 0);
-  my $color = shift(@ARGV);
-  die ("color: no such code $color\n",
-       "Available color codes:\n",
-       join(' ', sort(keys(%code))), "\n")
-    unless (defined($code{$color}));
+    die(
+        "Usage: color [-r] [-n] CODE [TEXT...]\n",
+        "Starts colorizing the output according to CODE. If TEXT is given,\n",
+        "then it is displayed. When -r is present, then the terminal color\n",
+        "is reset after the output. When -n present, a newline is appended.\n",
+        "CODE must be one of:\n",
+        join( ' ', sort( keys(%code) ) ),
+        "\n"
+    ) if ( not getopts( 'rn', \%opts ) or $#ARGV < 0 );
+    my $color = shift(@ARGV);
+    die(
+        "color: no such code $color\n",
+        "Available color codes:\n",
+        join( ' ', sort( keys(%code) ) ), "\n"
+    ) unless ( defined( $code{$color} ) );
 
-  print("\e[", $code{$color}, "m");
-  print(join(' ', @ARGV)) if (@ARGV);
-  print("\e[", $code{reset}, "m") if ($opts{r});
-  print("\n") if ($opts{n});
+    print( "\e[", $code{$color}, "m" );
+    print( join( ' ', @ARGV ) )       if (@ARGV);
+    print( "\e[", $code{reset}, "m" ) if ( $opts{r} );
+    print("\n")                       if ( $opts{n} );
 }
 
 sub cmd_rsyncdir {
     my %opts;
 
-    die("Usage: rsyncdir [-n] LOCALDIR USER\@HOST:REMOTEDIR\n",
-	"Syncs dirs using rsync/ssh. Flag -n is for tryout.\n")
-      if (not getopts('n', \%opts) or $#ARGV != 1);
-    my @cmd = ('rsync', '-v', '-c', '-r', '-u', '-l', '-p', '-E', '-t',
-	       '-S', '-x', '-essh', '--del', '-z');
-    push(@cmd, '-n') if ($opts{n});
-    push(@cmd, @ARGV);
+    die(
+        "Usage: rsyncdir [-n] LOCALDIR USER\@HOST:REMOTEDIR\n",
+        "Syncs dirs using rsync/ssh. Flag -n is for tryout.\n"
+    ) if ( not getopts( 'n', \%opts ) or $#ARGV != 1 );
+    my @cmd = (
+        'rsync', '-v', '-c', '-r', '-u', '-l',
+        '-p',    '-E', '-t', '-S', '-x', '-essh',
+        '--del', '-z'
+    );
+    push( @cmd, '-n' ) if ( $opts{n} );
+    push( @cmd, @ARGV );
 
     sysexec(@cmd);
     die("Failed to start rsync\n");
@@ -1146,26 +1254,29 @@ sub sysexec {
 sub sysrun {
     my $cmd = undef;
     for my $a (@_) {
-	my $b = $a;
-	if ($b =~ /'/) {
-	    $b = "\"$b\"";
-	} elsif ($b =~ /"/) {
-	    $b = "\'$b\'";
-	} elsif ($b =~ /\s/) {
-	    $b = "\"$b\"";
-	}
-	$cmd .= ' ' if ($cmd);
-	$cmd .= $b;
+        my $b = $a;
+        if ( $b =~ /'/ ) {
+            $b = "\"$b\"";
+        }
+        elsif ( $b =~ /"/ ) {
+            $b = "\'$b\'";
+        }
+        elsif ( $b =~ /\s/ ) {
+            $b = "\"$b\"";
+        }
+        $cmd .= ' ' if ($cmd);
+        $cmd .= $b;
     }
+
     # print($cmd, "\n");
-    system($cmd) and die ("Command $cmd failed\n");
+    system($cmd) and die("Command $cmd failed\n");
 }
 
 # Is an element in an array
 sub inarray {
     my $needle = shift;
     for my $hay (@_) {
-	return 1 if ($needle eq $hay);
+        return 1 if ( $needle eq $hay );
     }
     return undef;
 }
@@ -1173,7 +1284,7 @@ sub inarray {
 # Get the username
 sub user {
     for my $v (qw(USER LOGNAME)) {
-	return $ENV{$v} if ($ENV{$v});
+        return $ENV{$v} if ( $ENV{$v} );
     }
     return undef;
 }
@@ -1182,28 +1293,30 @@ sub user {
 sub findbin {
     my $p = shift;
     return unless ($p);
-    return $p if ($p =~ m{/} or -x $p);
-    for my $d (split(/:/, $ENV{PATH})) {
-	my $bin = "$d/$p";
-	if (-x $bin and (stat($bin))[1] != (stat($0))[1]) {
-	    # print("findbin $p -> $bin\n");
-	    return $bin;
-	}
+    return $p if ( $p =~ m{/} or -x $p );
+    for my $d ( split( /:/, $ENV{PATH} ) ) {
+        my $bin = "$d/$p";
+        if ( -x $bin and ( stat($bin) )[1] != ( stat($0) )[1] ) {
+
+            # print("findbin $p -> $bin\n");
+            return $bin;
+        }
     }
     return undef;
 }
 
 # Profile of this user
 sub profile {
-    return user() eq 'root' ?
-      anyfile(qw(/etc/bash.bashrc /etc/bashrc)) :
-      anyfile("$ENV{HOME}/.bashrc", "$ENV{HOME}/.profile");
+    return user() eq 'root'
+      ? anyfile(qw(/etc/bash.bashrc /etc/bashrc))
+      : anyfile( "$ENV{HOME}/.bashrc", "$ENV{HOME}/.profile" );
 }
 
 sub anyfile {
     for my $x (@_) {
-	# print "testing $x\n";
-	return $x if (-f $x);
+
+        # print "testing $x\n";
+        return $x if ( -f $x );
     }
     print "returning undef\n";
     return undef;
@@ -1212,26 +1325,33 @@ sub anyfile {
 # Get a tar compressor given a filename
 sub tarzipper {
     my $ar = shift;
-    if ($ar =~ /\.tar\.gz$/ or $ar =~ /\.tgz$/) {
-	return qw(gzip -c);
-    } elsif ($ar =~ /\.tar\.bz2$/ or $ar =~ /\.tbz2$/) {
-	return qw(bzip2 -c);
-    } elsif ($ar =~ /\.tar$/) {
-	return qw(cat);
-    } else {
-	die("Tar archive $ar: compression type not supported\n");
+    if ( $ar =~ /\.tar\.gz$/ or $ar =~ /\.tgz$/ ) {
+        return qw(gzip -c);
+    }
+    elsif ( $ar =~ /\.tar\.bz2$/ or $ar =~ /\.tbz2$/ ) {
+        return qw(bzip2 -c);
+    }
+    elsif ( $ar =~ /\.tar$/ ) {
+        return qw(cat);
+    }
+    else {
+        die("Tar archive $ar: compression type not supported\n");
     }
 }
+
 sub tarunzipper {
     my $ar = shift;
-    if ($ar =~ /\.tar\.gz$/ or $ar =~ /\.tgz$/) {
-	return qw(gunzip -c);
-    } elsif ($ar =~ /\.tar\.bz2$/ or $ar =~ /\.tbz2$/) {
-	return qw(bunzip2 -c);
-    } elsif ($ar =~ /\.tar$/) {
-	return qw(cat);
-    } else {
-	die("Tar archive $ar: compression type not supported\n");
+    if ( $ar =~ /\.tar\.gz$/ or $ar =~ /\.tgz$/ ) {
+        return qw(gunzip -c);
+    }
+    elsif ( $ar =~ /\.tar\.bz2$/ or $ar =~ /\.tbz2$/ ) {
+        return qw(bunzip2 -c);
+    }
+    elsif ( $ar =~ /\.tar$/ ) {
+        return qw(cat);
+    }
+    else {
+        die("Tar archive $ar: compression type not supported\n");
     }
 }
 
@@ -1240,46 +1360,57 @@ sub e_run {
     my $wait = shift;
 
     # Check for typical Mac-like Visual Studio or emacses
-    for my $ed ('/Applications/Visual Studio Code.app',
-		'/Applications/Aquamacs.app',
-		'/Applications/MacPorts/Emacs.app',
-		'/Applications/MacPorts/EmacsMac.app') {
-	if (-d $ed and user() ne 'root') {
-	    my @cmd = ('open', '-a', $ed);
-	    push(@cmd, '-W', '-n') if ($wait);
-	    push(@cmd, @_);
-	    push(@cmd, '--args', '-geometry', '80x50')
-		if ($ed =~ /emacs/i);
-	    # print STDERR (">>> @cmd\n");
-	    sysrun(@cmd);
-	    return;
-	}
+    for my $ed (
+        '/Applications/Visual Studio Code.app',
+        '/Applications/Aquamacs.app',
+        '/Applications/MacPorts/Emacs.app',
+        '/Applications/MacPorts/EmacsMac.app'
+      )
+    {
+        if ( -d $ed and user() ne 'root' ) {
+            my @cmd = ( 'open', '-a', $ed );
+            push( @cmd, '-W', '-n' ) if ($wait);
+            push( @cmd, @_ );
+            push( @cmd, '--args', '-geometry', '80x50' )
+              if ( $ed =~ /emacs/i );
+
+            # print STDERR (">>> @cmd\n");
+            sysrun(@cmd);
+            return;
+        }
     }
 
     # Nope, try the standard stuff.
     my $found = undef;
-    for my $e (findbin($ENV{EDITOR}), findbin($ENV{VISUAL}),
-	       findbin('emacs'), findbin('vim'), findbin('vi')) {
-	next unless ($e);
-	$found = 1;
-	my @args;
-	if ($e -~ /emacs/) {
-	    # For emacs, convert file:123 to +123 file. Store in @args.
-	    # Add backgrounding if $DISPLAY is set and no $wait is requested.
-	    for my $a (@_) {
-                if ($a =~ /(.*):(\d+)$/) {
-		    push(@args, "+$2", $1);
-                } else {
-		    push(@args, $a);
+    for my $e (
+        findbin( $ENV{EDITOR} ),
+        findbin( $ENV{VISUAL} ),
+        findbin('emacs'), findbin('vim'), findbin('vi')
+      )
+    {
+        next unless ($e);
+        $found = 1;
+        my @args;
+        if ( $e - ~/emacs/ ) {
+
+            # For emacs, convert file:123 to +123 file. Store in @args.
+            # Add backgrounding if $DISPLAY is set and no $wait is requested.
+            for my $a (@_) {
+                if ( $a =~ /(.*):(\d+)$/ ) {
+                    push( @args, "+$2", $1 );
                 }
-	    }
-	    push(@args, '&') if ($ENV{DISPLAY} and not $wait);
-	} else {
-	    # Not emacs. Copy to @args.
-	    @args = @_;
-	}
-	sysrun($e, @args);
-	last;
+                else {
+                    push( @args, $a );
+                }
+            }
+            push( @args, '&' ) if ( $ENV{DISPLAY} and not $wait );
+        }
+        else {
+            # Not emacs. Copy to @args.
+            @args = @_;
+        }
+        sysrun( $e, @args );
+        last;
     }
     die("No editor found\n") unless ($found);
 }
@@ -1287,25 +1418,29 @@ sub e_run {
 # Run stuff in an xterm - if we have a DISPLAY and if we have xterm
 # Caller must add '|',findbin('less') if they want paging.
 sub xterm_run {
-    my $c = shift;
+    my $c   = shift;
     my $cmd = findbin($c) or die("Failed to locate command '$c'\n");
 
-    if (! -t STDOUT or ! -t STDIN) {
-	sysrun($cmd, @_);
-    } elsif ($ENV{DISPLAY} and findbin('xterm')) {
-	sysrun('xterm', '-geometry', '80x40', '-bg', 'lightyellow',
-               '-fg', 'black', '-e',
-	       "$cmd @_", '&');
-    } else {
-	sysrun($cmd, @_,);
+    if ( !-t STDOUT or !-t STDIN ) {
+        sysrun( $cmd, @_ );
+    }
+    elsif ( $ENV{DISPLAY} and findbin('xterm') ) {
+        sysrun(
+            'xterm',       '-geometry', '80x40', '-bg',
+            'lightyellow', '-fg',       'black', '-e',
+            "$cmd @_",     '&'
+        );
+    }
+    else {
+        sysrun( $cmd, @_, );
     }
 }
 
 # What is the install dir of all these symlinks
 sub instbase() {
-    for my $d (split(/:/, $ENV{PATH})) {
-	next if ($d eq '.');
-	return $d if (-x "$d/msc");
+    for my $d ( split( /:/, $ENV{PATH} ) ) {
+        next      if ( $d eq '.' );
+        return $d if ( -x "$d/msc" );
     }
     return '/usr/local/bin';
 }
@@ -1314,64 +1449,68 @@ sub instbase() {
 sub shell_escape($) {
     my $str = shift;
 
-    return $str if ($str !~ /\s/ and $str !~ /'/ and $str !~ /"/);
-    return "'$str'" if ($str !~ /'/);
-    return "\"$str\"" if ($str !~ /"/);
+    return $str       if ( $str !~ /\s/ and $str !~ /'/ and $str !~ /"/ );
+    return "'$str'"   if ( $str !~ /'/ );
+    return "\"$str\"" if ( $str !~ /"/ );
     my $ret = '"';
-    for my $ch (split('', $str)) {
-	if ($ch eq "'") {
-	    $str .= "\\'";
-	} elsif ($ch eq "\"") {
-	    $str .= "\\\"";
-	} elsif ($ch eq " ") {
-	    $str .= "\\ ";
-	} else {
-	    $str .= $ch;
-	}
+    for my $ch ( split( '', $str ) ) {
+        if ( $ch eq "'" ) {
+            $str .= "\\'";
+        }
+        elsif ( $ch eq "\"" ) {
+            $str .= "\\\"";
+        }
+        elsif ( $ch eq " " ) {
+            $str .= "\\ ";
+        }
+        else {
+            $str .= $ch;
+        }
     }
     return $ret;
 }
 
 # Strip whitespace in files or stdin
 sub stripws_in_file($) {
-  my $f = shift;
+    my $f = shift;
 
-  # [KK 2017-11-03] karelk@ DO NOT SUBMIT Needs more work
-  # - outf can be stdout
-  # - trailing empty lines must be reduced to 1
+    # [KK 2017-11-03] karelk@ DO NOT SUBMIT Needs more work
+    # - outf can be stdout
+    # - trailing empty lines must be reduced to 1
 
-  my $out = $f eq '-' ? $f : "$f.tmp";
-  open(my $if, $f)         or die("stripws: cannot read $f: $!\n");
-  open(my $of, ">$out")    or die("stripws: cannot write $out: $!\n");
+    my $out = $f eq '-' ? $f : "$f.tmp";
+    open( my $if, $f )      or die("stripws: cannot read $f: $!\n");
+    open( my $of, ">$out" ) or die("stripws: cannot write $out: $!\n");
 
-  my $emptytrailing = 0;
-  while (my $line = <$if>) {
-    chomp($line);
-    $line =~ s{\s*$}{};
-    if ($line eq '') {
-      $emptytrailing++;
-    } else {
-      for (my $i = 0; $i < $emptytrailing; $i++) {
-        print $of ("\n");
-      }
-      print $of ("$line\n");
-      $emptytrailing = 0;
+    my $emptytrailing = 0;
+    while ( my $line = <$if> ) {
+        chomp($line);
+        $line =~ s{\s*$}{};
+        if ( $line eq '' ) {
+            $emptytrailing++;
+        }
+        else {
+            for ( my $i = 0 ; $i < $emptytrailing ; $i++ ) {
+                print $of ("\n");
+            }
+            print $of ("$line\n");
+            $emptytrailing = 0;
+        }
     }
-  }
 
-  if ($f ne '-') {
-    close($of);
-    unlink($f)       or die("stripws: cannot unlink $f: $!\n");
-    rename($out, $f) or die("stripws: cannot rename $out to $f: $!\n");
-  }
+    if ( $f ne '-' ) {
+        close($of);
+        unlink($f)         or die("stripws: cannot unlink $f: $!\n");
+        rename( $out, $f ) or die("stripws: cannot rename $out to $f: $!\n");
+    }
 }
 
 sub cmd_stripws {
-  die <<"EOF" if ($#ARGV < 0);
+    die <<"EOF" if ( $#ARGV < 0 );
 Usage: stripws FILE(s): removes trailing whitespace in the file(s)
 Use - for the filename to work on STDIN.
 EOF
-  for my $f (@_) {
-    stripws_in_file($f);
-  }
+    for my $f (@_) {
+        stripws_in_file($f);
+    }
 }
